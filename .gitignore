@@ -1,0 +1,13 @@
+# Ignorar archivos de configuración de VS Code
+.vscode/
+
+# Ignorar archivos temporales del sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar logs de error
+error_log
+php_error.log
+
+# Ignorar base de datos local (solo subiremos el .sql)
+*.db

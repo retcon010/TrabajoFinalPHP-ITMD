@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  # Servicio de Base de Datos
+  db:
+    image: mysql:8.0
+    container_name: itmd_mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: sistema_itmd
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      # Esto importa la bbdd automáticamente al iniciar
+      - ./database.sql:/docker-entrypoint-initdb.d/data.sql
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Servicio de la Aplicación PHP
+  app:
+    build: .
+    container_name: itmd_app
+    ports:
+      - "8080:80" # Podrás ver tu web en http://localhost:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/var/www/html/
+
+volumes:
+  db_data:
