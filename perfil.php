@@ -1,35 +1,28 @@
 <?php 
 include 'config/conexion.php'; 
-if(!isset($_SESSION['idUser'])) header("Location: login.php");
+if (!isset($_SESSION['idUser'])) { header("Location: login.php"); exit(); }
 
-$id = $_SESSION['idUser'];
-$mensaje = "";
+$idUsuario = $_SESSION['idUser'];
+$msg = "";
 
-// Lógica de actualización
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $nom = mysqli_real_escape_string($conn, $_POST['nombre']);
-    $ape = mysqli_real_escape_string($conn, $_POST['apellidos']);
-    $tel = mysqli_real_escape_string($conn, $_POST['telefono']);
-    
-    // Actualizar datos básicos
-    $sql_u = "UPDATE users_data SET nombre='$nom', apellidos='$ape', telefono='$tel' WHERE idUser='$id'";
-    
-    if(mysqli_query($conn, $sql_u)) {
-        $mensaje = "<p class='success'>Datos actualizados correctamente.</p>";
-        $_SESSION['nombre'] = $nom; // Actualizar el nombre en la sesión
-    }
+if (isset($_POST['guardar_perfil'])) {
+    $n = mysqli_real_escape_string($conn, $_POST['nombre']);
+    $a = mysqli_real_escape_string($conn, $_POST['apellidos']);
+    $e = mysqli_real_escape_string($conn, $_POST['email']);
+    $t = mysqli_real_escape_string($conn, $_POST['telefono']);
+    $fn = $_POST['fecha_nacimiento'];
+    $d = mysqli_real_escape_string($conn, $_POST['direccion']);
+    $s = $_POST['sexo'];
 
-    // Si el usuario escribió una nueva contraseña
-    if(!empty($_POST['new_pass'])) {
-        $pass_hash = password_hash($_POST['new_pass'], PASSWORD_DEFAULT);
-        mysqli_query($conn, "UPDATE users_login SET password='$pass_hash' WHERE idUser='$id'");
-        $mensaje .= "<p class='success'>La contraseña también ha sido actualizada.</p>";
+    $sql = "UPDATE users_data SET nombre='$n', apellidos='$a', email='$e', telefono='$t', fecha_nacimiento='$fn', direccion='$d', sexo='$s' WHERE idUser='$idUsuario'";
+    if (mysqli_query($conn, $sql)) {
+        $msg = "<div class='alert alert-success'>Perfil actualizado correctamente.</div>";
+    } else {
+        $msg = "<div class='alert alert-error'>Error al actualizar el perfil.</div>";
     }
 }
 
-// Obtener datos actuales para mostrar en el formulario
-$res = mysqli_query($conn, "SELECT * FROM users_data WHERE idUser='$id'");
-$u = mysqli_fetch_assoc($res);
+$u = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM users_data WHERE idUser='$idUsuario'"));
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -41,27 +34,49 @@ $u = mysqli_fetch_assoc($res);
 <body>
     <?php include 'includes/navbar.php'; ?>
     <div class="container">
-        <h2>Mi Perfil</h2>
-        <?php echo $mensaje; ?>
-        <form method="POST">
-            <label>Nombre:</label>
-            <input type="text" name="nombre" value="<?php echo $u['nombre']; ?>" required>
-            
-            <label>Apellidos:</label>
-            <input type="text" name="apellidos" value="<?php echo $u['apellidos']; ?>" required>
-            
-            <label>Teléfono:</label>
-            <input type="text" name="telefono" value="<?php echo $u['telefono']; ?>" required>
-            
-            <label>Email (No editable):</label>
-            <input type="text" value="<?php echo $u['email']; ?>" disabled>
-            
-            <hr>
-            <label>Nueva Contraseña (dejar en blanco para no cambiar):</label>
-            <input type="password" name="new_pass">
-            
-            <button type="submit">Guardar Cambios</button>
-        </form>
+        <div class="form-card" style="max-width: 600px;">
+            <h2>Mi Perfil</h2>
+            <?= $msg; ?>
+            <form method="POST">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre:</label>
+                        <input type="text" name="nombre" value="<?= $u['nombre'] ?? ''; ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Apellidos:</label>
+                        <input type="text" name="apellidos" value="<?= $u['apellidos'] ?? ''; ?>" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" name="email" value="<?= $u['email'] ?? ''; ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono:</label>
+                        <input type="text" name="telefono" value="<?= $u['telefono'] ?? ''; ?>">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Nacimiento:</label>
+                    <input type="date" name="fecha_nacimiento" value="<?= $u['fecha_nacimiento'] ?? ''; ?>" required>
+                </div>
+                <div class="form-group">
+                    <label>Dirección:</label>
+                    <input type="text" name="direccion" value="<?= $u['direccion'] ?? ''; ?>">
+                </div>
+                <div class="form-group">
+                    <label>Sexo:</label>
+                    <select name="sexo">
+                        <option value="Masculino" <?= (($u['sexo'] ?? '') == 'Masculino') ? 'selected' : ''; ?>>Masculino</option>
+                        <option value="Femenino" <?= (($u['sexo'] ?? '') == 'Femenino') ? 'selected' : ''; ?>>Femenino</option>
+                        <option value="Otro" <?= (($u['sexo'] ?? '') == 'Otro') ? 'selected' : ''; ?>>Otro</option>
+                    </select>
+                </div>
+                <button type="submit" name="guardar_perfil">Guardar Cambios</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>
